@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>THE BEST - Premium Social Network</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Firebase SDK (v8) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    :root {
+      --bg-main: #060608;
+      --card-bg: rgba(18, 18, 26, 0.75);
+      --border-color: rgba(255, 255, 255, 0.12);
+      --border-hover: rgba(99, 102, 241, 0.4);
+      --accent-color: #6366f1;
+      --accent-hover: #4f46e5;
+      --verified-color: #38bdf8;
+      --text-main: #f3f4f6;
+      --text-sub: #9ca3af;
+      --neon-glow: 0 0 15px rgba(99, 102, 241, 0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Kanit', sans-serif; transition: background 0.2s, border-color 0.2s, box-shadow 0.2s; }
+
+    body {
+      background: var(--bg-main); color: var(--text-main); min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      background-image: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.18) 0%, transparent 60%), radial-gradient(circle at 10% 80%, rgba(56, 189, 248, 0.08) 0%, transparent 40%);
+      background-attachment: fixed;
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #08080a; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+
+    .header-bar {
+      width: 100%; background: rgba(10, 10, 16, 0.85); backdrop-filter: blur(16px);
+      padding: 14px 24px; display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border-color);
+    }
+
+    .logo {
+      font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: 1.5px; text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+    }
+
+    .header-right { display: flex; align-items: center; gap: 12px; }
+
+    .user-tag {
+      font-size: 13px; color: var(--text-main); background: rgba(255, 255, 255, 0.05);
+      padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border-color);
+      font-weight: 500; display: flex; align-items: center; gap: 6px;
+    }
+
+    .admin-badge {
+      background: linear-gradient(45deg, #ef4444, #f59e0b); color: #fff;
+      padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: bold;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+    }
+
+    .nav-tabs {
+      display: flex; width: 100%; max-width: 600px; background: rgba(12, 12, 18, 0.85);
+      backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-color);
+      position: sticky; top: 61px; z-index: 90;
+    }
+
+    .tab-btn {
+      flex: 1; padding: 14px 8px; text-align: center; background: none; border: none;
+      color: var(--text-sub); font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent;
+    }
+
+    .tab-btn.active { color: #ffffff; border-bottom-color: var(--accent-color); background: rgba(255, 255, 255, 0.03); }
+
+    .app-container { width: 100%; max-width: 600px; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+    .tab-content { display: none; flex-direction: column; gap: 16px; }
+    .tab-content.active { display: flex; }
+
+    .card {
+      background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--border-color);
+      border-radius: 20px; padding: 20px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); position: relative;
+    }
+    .card:hover { border-color: var(--border-hover); }
+
+    .profile-cover {
+      width: calc(100% + 40px); height: 140px; background-size: cover; background-position: center;
+      background-color: #1f2937; border-radius: 18px 18px 0 0; margin: -20px -20px 0 -20px;
+    }
+
+    .profile-avatar-wrapper { margin-top: -50px; margin-bottom: 10px; text-align: center; }
+    .profile-avatar {
+      width: 90px; height: 90px; border-radius: 50%; object-fit: cover;
+      border: 4px solid #121218; background: #181824; box-shadow: var(--neon-glow);
+    }
+
+    .follow-stats-bar {
+      display: flex; justify-content: center; gap: 24px; margin-top: 12px;
+      padding-top: 10px; border-top: 1px dashed var(--border-color);
+    }
+    .stat-item { text-align: center; }
+    .stat-num { font-size: 16px; font-weight: 700; color: #fff; }
+    .stat-label { font-size: 11px; color: var(--text-sub); }
+
+    .input-group { margin-bottom: 12px; }
+    .input-group input, .input-group textarea {
+      width: 100%; padding: 14px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color);
+      border-radius: 12px; color: #ffffff; font-size: 14px; outline: none;
+    }
+    .input-group input:focus, .input-group textarea:focus { border-color: var(--accent-color); box-shadow: var(--neon-glow); }
+
+    .file-label {
+      display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px;
+      background: rgba(255, 255, 255, 0.03); border: 1px dashed var(--border-color);
+      border-radius: 12px; cursor: pointer; color: var(--text-sub); font-size: 13px; margin-bottom: 12px;
+    }
+    .file-label:hover { border-color: var(--accent-color); color: #fff; }
+    input[type="file"] { display: none; }
+
+    .btn {
+      width: 100%; padding: 12px; background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+      color: #ffffff; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-admin { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+    .btn-secondary { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-color); }
+    .btn-following { background: rgba(255, 255, 255, 0.15); border: 1px solid var(--border-color); color: #fff; }
+
+    .post-box {
+      background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--border-color);
+      padding: 20px; border-radius: 20px; display: flex; flex-direction: column; gap: 12px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    }
+    .post-header { display: flex; align-items: center; justify-content: space-between; }
+    .post-header-left { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .post-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+    .verified-badge { color: var(--verified-color); font-size: 14px; margin-left: 2px; }
+    .post-time { font-size: 11px; color: var(--text-sub); }
+
+    .post-media { width: 100%; max-height: 420px; object-fit: cover; border-radius: 14px; border: 1px solid var(--border-color); margin-top: 4px; }
+    .post-actions-bar { display: flex; align-items: center; gap: 10px; padding-top: 8px; border-top: 1px solid var(--border-color); }
+
+    .action-btn {
+      background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: var(--text-main);
+      padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+    }
+    .action-btn:hover { background: rgba(255, 255, 255, 0.1); }
+    .action-btn.liked { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #f87171; }
+
+    .comments-area { display: none; flex-direction: column; gap: 12px; margin-top: 8px; padding-top: 12px; border-top: 1px dashed var(--border-color); }
+    .comment-item { background: rgba(255, 255, 255, 0.03); padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.06); }
+    .comment-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .comment-user { font-weight: 600; font-size: 13px; color: #a5b4fc; cursor: pointer; }
+    .comment-text { font-size: 13px; color: #f3f4f6; word-break: break-word; }
+
+    .comment-box-input { display: flex; gap: 8px; margin-top: 4px; }
+    .comment-box-input input { flex: 1; padding: 10px 14px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: 10px; color: #fff; font-size: 13px; outline: none; }
+    .comment-box-input button { width: auto; padding: 0 16px; font-size: 13px; border-radius: 10px; }
+
+    /* Modal Overlay General */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);
+      display: none; justify-content: center; align-items: center; z-index: 1000; padding: 16px;
+    }
+
+    .modal-card {
+      width: 100%; max-width: 440px; background: #121218; border: 1px solid var(--border-color);
+      border-radius: 24px; padding: 24px; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+      animation: modalFadeIn 0.2s ease-out;
+    }
+
+    @keyframes modalFadeIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .close-modal-btn {
+      position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.1);
+      border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%;
+      cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; z-index: 10;
+    }
+
+    /* 💬 CHAT CENTER TAB STYLES 💬 */
+    .chat-user-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color);
+      border-radius: 16px; cursor: pointer; transition: 0.2s;
+    }
+    .chat-user-item:hover { background: rgba(255, 255, 255, 0.08); border-color: var(--accent-color); }
+    .chat-user-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+
+    /* กล่องแชทแบบเต็มนวัตกรรม */
+    .chat-box-full {
+      display: flex; flex-direction: column; height: 520px; background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color); border-radius: 20px; overflow: hidden;
+    }
+    .chat-box-header {
+      padding: 12px 16px; background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .chat-messages-area {
+      flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+    }
+    .chat-msg-wrapper { display: flex; flex-direction: column; }
+    .chat-msg-wrapper.me { align-items: flex-end; }
+    .chat-msg-wrapper.other { align-items: flex-start; }
+    .chat-msg-bubble {
+      max-width: 75%; padding: 10px 14px; border-radius: 16px; font-size: 13.5px; line-height: 1.4; word-break: break-word;
+    }
+    .chat-msg-wrapper.me .chat-msg-bubble {
+      background: linear-gradient(135deg, var(--accent-color), var(--accent-hover)); color: #fff; border-bottom-right-radius: 2px;
+    }
+    .chat-msg-wrapper.other .chat-msg-bubble {
+      background: rgba(255,255,255,0.08); color: #fff; border-bottom-left-radius: 2px; border: 1px solid var(--border-color);
+    }
+    .chat-time-stamp { font-size: 10px; color: var(--text-sub); margin-top: 3px; padding: 0 4px; }
+    .chat-input-area {
+      padding: 12px; border-top: 1px solid var(--border-color); display: flex; gap: 8px; background: rgba(0,0,0,0.6);
+    }
+    .chat-input-area input {
+      flex: 1; padding: 12px 14px; background: rgba(0,0,0,0.5); border: 1px solid var(--border-color);
+      border-radius: 12px; color: #fff; font-size: 13.5px; outline: none;
+    }
+
+    .preview-box { width: 100%; max-height: 250px; object-fit: cover; border-radius: 12px; margin-bottom: 12px; display: none; }
+    .progress-container { width: 100%; background: rgba(255,255,255,0.1); border-radius: 10px; height: 8px; overflow: hidden; margin-bottom: 12px; display: none; }
+    .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #6366f1, #38bdf8); }
+    .btn-delete-post { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #ef4444; padding: 4px 10px; border-radius: 8px; font-size: 11px; cursor: pointer; }
+    .user-item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 10px; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+  <!-- Header Bar -->
+  <div class="header-bar">
+    <div class="logo">THE BEST</div>
+    <div class="header-right" id="header-right" style="display: none;">
+      <div class="user-tag" id="header-user">Guest</div>
+    </div>
+  </div>
+
+  <!-- Auth Screen -->
+  <div class="app-container" id="auth-card" style="max-width: 400px; margin-top: 30px;">
+    <div class="card">
+      <h2 id="form-title" style="text-align: center; margin-bottom: 20px;">เข้าสู่ระบบ</h2>
+      <div class="input-group"><input type="text" id="username" placeholder="ชื่อผู้ใช้"></div>
+      <div class="input-group"><input type="password" id="password" placeholder="รหัสผ่าน"></div>
+      
+      <div class="input-group" id="recovery-question-group" style="display: none;">
+        <input type="text" id="recovery-answer" placeholder="ชื่อสัตว์เลี้ยงตัวแรก? (กันลืมรหัส)">
+      </div>
+
+      <button class="btn" id="submit-btn" onclick="handleSubmit()">เข้าสู่ระบบ</button>
+
+      <div style="text-align: center; margin-top: 16px; font-size: 12px; color: var(--text-sub);" id="toggle-text">
+        ยังไม่มีบัญชี? <a style="color: #a5b4fc; cursor: pointer; text-decoration: underline;" onclick="switchMode('register')">สมัครสมาชิก</a> | 
+        <a style="color: #f87171; cursor: pointer; text-decoration: underline;" onclick="switchMode('forgot')">ลืมรหัสผ่าน?</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="nav-tabs" id="main-nav" style="display: none;">
+    <button class="tab-btn active" id="tab-btn-feed" onclick="switchTab('feed')">📝 ฟีดโพสต์</button>
+    <button class="tab-btn" id="tab-btn-chat" onclick="switchTab('chat')">💬 แชท</button>
+    <button class="tab-btn" id="tab-btn-profile" onclick="switchTab('profile')">👤 โปรไฟล์</button>
+    <button class="tab-btn" id="tab-btn-admin" style="display:none; color: #ef4444;" onclick="switchTab('admin')">⚡ CPO Panel</button>
+  </div>
+
+  <!-- Main Container -->
+  <div class="app-container" id="main-dashboard" style="display: none;">
+    <!-- FEED TAB -->
+    <div class="tab-content active" id="tab-feed">
+      <div class="card">
+        <h4 style="font-size: 15px; margin-bottom: 12px;">✨ สร้างโพสต์ใหม่</h4>
+        <div class="input-group">
+          <textarea id="post-content" rows="3" placeholder="มีความคิดเห็นอย่างไรวันนี้..."></textarea>
+        </div>
+
+        <label class="file-label" for="post-file">📷 / 🎥 แนบรูปภาพ หรือ วิดีโอ</label>
+        <input type="file" id="post-file" accept="image/*,video/*" onchange="handleFilePreview(this)">
+        
+        <img id="post-preview-img" class="preview-box">
+        <video id="post-preview-video" class="preview-box" controls></video>
+
+        <div class="progress-container" id="upload-progress-container">
+          <div class="progress-bar" id="upload-progress-bar"></div>
+        </div>
+        <div id="upload-status" style="font-size: 12px; color: var(--accent-color); margin-bottom: 8px; text-align: center;"></div>
+
+        <button class="btn" id="post-btn" onclick="createPost()">โพสต์ข้อความ</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px;" id="feed-list"></div>
+    </div>
+
+    <!-- 💬 CHAT CENTER TAB (หน้ารวมแชททั้งหมด) -->
+    <div class="tab-content" id="tab-chat">
+      <div class="card">
+        <div id="chat-list-view">
+          <h3 style="font-size: 16px; margin-bottom: 14px;">💬 ศูนย์รวมข้อความแชท</h3>
+          <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 16px;">เลือกคนที่คุณติดตามเพื่อเริ่มทักแชทคุยได้เลย:</p>
+          <div id="chat-recent-list" style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- รายชื่อแชทเด้งตรงนี้ -->
+          </div>
+        </div>
+
+        <!-- หน้าต่างสนทนาแชทจริง (เปิดเมื่อกดเลือกชื่อเพื่อน) -->
+        <div id="chat-room-view" style="display: none;">
+          <button class="btn btn-secondary" style="width: auto; padding: 6px 14px; margin-bottom: 12px; font-size: 12px;" onclick="backToChatList()">← ย้อนกลับไปหน้ารายชื่อ</button>
+          
+          <div class="chat-box-full">
+            <div class="chat-box-header">
+              <img id="active-chat-avatar" class="chat-user-avatar" src="">
+              <div>
+                <strong id="active-chat-username" style="color: #fff; font-size: 14px;">Username</strong>
+                <div style="font-size: 11px; color: #10b981;">🟢 ออนไลน์ (ติดตามกันแล้ว)</div>
+              </div>
+            </div>
+
+            <div class="chat-messages-area" id="chat-messages-container">
+              <!-- ข้อความคุยกันจะเด้งตรงนี้แบบ Real-time -->
+            </div>
+
+            <div class="chat-input-area">
+              <input type="text" id="chat-msg-input" placeholder="พิมพ์ข้อความตอบกลับที่นี่..." onkeypress="if(event.key==='Enter') sendChatMessage()">
+              <button class="btn" style="width: auto; padding: 0 18px;" onclick="sendChatMessage()">ส่ง</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MY PROFILE TAB -->
+    <div class="tab-content" id="tab-profile">
+      <div class="card" style="padding-top:0;">
+        <div class="profile-cover" id="display-cover"></div>
+        <div class="profile-avatar-wrapper">
+          <img src="https://via.placeholder.com/90" id="display-avatar" class="profile-avatar">
+        </div>
+        <div style="text-align: center;">
+          <h3 id="display-username">Username</h3>
+          <div id="display-role" style="margin-top: 4px;"></div>
+          <p id="display-bio" style="font-size: 13px; color: var(--text-sub); margin-top: 8px;">ยังไม่ได้ตั้งค่า Bio</p>
+
+          <div class="follow-stats-bar">
+            <div class="stat-item">
+              <div class="stat-num" id="my-followers-count">0</div>
+              <div class="stat-label">ผู้ติดตาม</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="my-following-count">0</div>
+              <div class="stat-label">กำลังติดตาม</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4 style="font-size: 15px; margin-bottom: 12px;">⚙️ ตั้งค่าโปรไฟล์ & รูปปก</h4>
+        <label class="file-label" for="edit-cover-file">🖼️ เปลี่ยนรูปภาพปก (Cover)</label>
+        <input type="file" id="edit-cover-file" accept="image/*">
+
+        <label class="file-label" for="edit-avatar-file">📷 เปลี่ยนรูปโปรไฟล์</label>
+        <input type="file" id="edit-avatar-file" accept="image/*">
+
+        <div class="input-group"><input type="text" id="edit-bio" placeholder="ข้อความ Bio..."></div>
+        <button class="btn" onclick="saveProfile()">บันทึกโปรไฟล์</button>
+      </div>
+
+      <div class="card">
+        <h4 style="font-size: 15px; margin-bottom: 12px;">🔑 เปลี่ยนรหัสผ่าน</h4>
+        <div class="input-group"><input type="password" id="change-pass-old" placeholder="รหัสผ่านเดิม"></div>
+        <div class="input-group"><input type="password" id="change-pass-new" placeholder="รหัสผ่านใหม่"></div>
+        <button class="btn btn-secondary" onclick="changePassword()">อัปเดตรหัสผ่าน</button>
+      </div>
+
+      <button class="btn btn-danger" onclick="logout()">🚪 ออกจากระบบ</button>
+    </div>
+
+    <!-- CPO ADMIN TAB -->
+    <div class="tab-content" id="tab-admin">
+      <div class="card">
+        <h3 style="color: #ef4444; margin-bottom: 12px;">⚡ CPO POWER CONTROL 1000%</h3>
+        <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 16px;">ระบบจัดการสูงสุดสำหรับ CPO</p>
+        <div style="display:flex; gap: 8px; margin-bottom: 16px;">
+          <input type="text" id="admin-search-user" placeholder="ค้นหาผู้ใช้..." style="flex:1; padding:10px; background:rgba(0,0,0,0.4); border:1px solid var(--border-color); border-radius:10px; color:#fff;">
+          <button class="btn btn-admin" style="width: auto; padding: 0 16px;" onclick="renderAdminUsers()">ค้นหา</button>
+        </div>
+        <div id="admin-user-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ดูโปรไฟล์ผู้ใช้อื่น (USER PROFILE MODAL) -->
+  <div class="modal-overlay" id="user-profile-modal">
+    <div class="modal-card">
+      <button class="close-modal-btn" onclick="closeUserProfileModal()">✕</button>
+      <div class="profile-cover" id="view-user-cover" style="margin: -24px -24px 0 -24px;"></div>
+      <div class="profile-avatar-wrapper">
+        <img src="https://via.placeholder.com/90" id="view-user-avatar" class="profile-avatar">
+      </div>
+      <div style="text-align: center;">
+        <h3 id="view-user-name">Username</h3>
+        <div id="view-user-role" style="margin-top: 4px;"></div>
+        <p id="view-user-bio" style="font-size: 13px; color: var(--text-sub); margin-top: 8px;">Bio...</p>
+
+        <div class="follow-stats-bar">
+          <div class="stat-item">
+            <div class="stat-num" id="view-user-followers">0</div>
+            <div class="stat-label">ผู้ติดตาม</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num" id="view-user-following">0</div>
+            <div class="stat-label">กำลังติดตาม</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button class="btn" id="btn-toggle-follow" onclick="handleFollowToggle()">➕ ติดตาม</button>
+          <button class="btn btn-secondary" id="btn-open-chat" onclick="handleOpenChatClick()">💬 ทักแชทเลย</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = { databaseURL: "https://the-best-b459d-default-rtdb.firebaseio.com" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let currentUser = null;
+    let currentMode = 'login';
+    let globalPosts = {};
+
+    let inspectingTargetUser = null;
+    let activeChatTarget = null;
+    let activeChatRoomId = null;
+    let chatListenerRef = null;
+
+    function isCPO(username) {
+      if(!username) return false;
+      const u = username.toUpperCase();
+      return u === "PUN888" || u === "PUN777";
+    }
+
+    function timeAgo(timestamp) {
+      if (!timestamp) return 'เมื่อสักครู่';
+      const seconds = Math.floor((Date.now() - timestamp) / 1000);
+      if (seconds < 60) return 'เมื่อสักครู่';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes} นาทีที่แล้ว`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours} ชั่วโมงที่แล้ว`;
+      const days = Math.floor(hours / 24);
+      return `${days} วันที่แล้ว`;
+    }
+
+    function formatTime(timestamp) {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+      document.getElementById(`tab-btn-${tabName}`).classList.add('active');
+      
+      if (tabName === 'admin') renderAdminUsers();
+      if (tabName === 'chat') loadChatList();
+      if (tabName === 'profile') loadMyProfileStats();
+    }
+
+    function switchMode(mode) {
+      currentMode = mode;
+      const title = document.getElementById('form-title');
+      const submitBtn = document.getElementById('submit-btn');
+      const recoveryGroup = document.getElementById('recovery-question-group');
+      const passInput = document.getElementById('password');
+
+      if (mode === 'register') {
+        title.innerText = "สมัครสมาชิก"; submitBtn.innerText = "สมัครสมาชิก";
+        recoveryGroup.style.display = 'block'; passInput.style.display = 'block';
+      } else if (mode === 'login') {
+        title.innerText = "เข้าสู่ระบบ"; submitBtn.innerText = "เข้าสู่ระบบ";
+        recoveryGroup.style.display = 'none'; passInput.style.display = 'block';
+      } else if (mode === 'forgot') {
+        title.innerText = "กู้คืนรหัสผ่าน"; submitBtn.innerText = "ตรวจสอบและตั้งรหัสใหม่";
+        recoveryGroup.style.display = 'block'; passInput.placeholder = "ตั้งรหัสผ่านใหม่";
+      }
+    }
+
+    function handleSubmit() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const recovery = document.getElementById('recovery-answer').value.trim();
+
+      if (!username) return alert("กรุณากรอกชื่อผู้ใช้");
+
+      const userRef = db.ref('users/' + username);
+
+      if (currentMode === 'register') {
+        if (!password || !recovery) return alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+        userRef.once('value', snap => {
+          if (snap.exists()) return alert("ชื่อผู้ใช้นี้ถูกใช้งานแล้ว");
+          const cpoStatus = isCPO(username);
+          const userData = {
+            username: username, password: password, recoveryAnswer: recovery,
+            role: cpoStatus ? "CPO_GOD" : "สมาชิกทั่วไป", verified: cpoStatus, banned: false,
+            avatar: "https://via.placeholder.com/90",
+            cover: "https://via.placeholder.com/600x200/1e1e2d/ffffff?text=THE+BEST",
+            bio: "ยินดีต้อนรับสู่โปรไฟล์ของฉัน"
+          };
+          userRef.set(userData, () => {
+            alert("สมัครสมาชิกสำเร็จ!"); switchMode('login');
+          });
+        });
+      } else if (currentMode === 'login') {
+        if (!password) return alert("กรุณากรอกรหัสผ่าน");
+        userRef.once('value', snap => {
+          if (!snap.exists()) return alert("ไม่พบชื่อผู้ใช้");
+          const data = snap.val();
+          if (data.banned) return alert("❌ บัญชีของคุณถูกแบนจากระบบโดย CPO");
+          if (data.password === password) {
+            currentUser = data; loginSuccess();
+          } else { alert("❌ รหัสผ่านไม่ถูกต้อง"); }
+        });
+      } else if (currentMode === 'forgot') {
+        if (!recovery || !password) return alert("กรุณากรอกคำตอบกันลืม และรหัสผ่านใหม่");
+        userRef.once('value', snap => {
+          if (!snap.exists()) return alert("ไม่พบชื่อผู้ใช้นี้");
+          const data = snap.val();
+          if (data.recoveryAnswer === recovery) {
+            userRef.update({ password: password }, () => {
+              alert("ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว! กรุณาเข้าสู่ระบบ"); switchMode('login');
+            });
+          } else { alert("❌ คำตอบกันลืมรหัสผ่านไม่ถูกต้อง"); }
+        });
+      }
+    }
+
+    function loginSuccess() {
+      document.getElementById('auth-card').style.display = 'none';
+      document.getElementById('header-right').style.display = 'flex';
+      document.getElementById('main-nav').style.display = 'flex';
+      document.getElementById('main-dashboard').style.display = 'flex';
+
+      if (isCPO(currentUser.username)) {
+        document.getElementById('tab-btn-admin').style.display = 'block';
+      }
+
+      document.getElementById('header-user').innerHTML = `
+        ${currentUser.username} ${currentUser.verified ? '✔️' : ''} 
+        ${isCPO(currentUser.username) ? '<span class="admin-badge">CPO 1000%</span>' : ''}
+      `;
+
+      updateProfileUI(); loadFeed(); listenUserChanges(); loadMyProfileStats();
+    }
+
+    function listenUserChanges() {
+      db.ref(`users/${currentUser.username}`).on('value', snap => {
+        if(snap.exists()){
+          currentUser = snap.val();
+          if (currentUser.banned) { alert("❌ บัญชีของคุณถูกแบนโดย CPO"); logout(); }
+          updateProfileUI();
+        }
+      });
+    }
+
+    function updateProfileUI() {
+      document.getElementById('display-username').innerText = currentUser.username;
+      document.getElementById('display-bio').innerText = currentUser.bio || "ยังไม่ได้ตั้งค่า Bio";
+      document.getElementById('display-avatar').src = currentUser.avatar || "https://via.placeholder.com/90";
+      document.getElementById('display-cover').style.backgroundImage = `url('${currentUser.cover || "https://via.placeholder.com/600x200/1e1e2d/ffffff?text=THE+BEST"}')`;
+
+      let roleText = currentUser.verified ? '<span style="color:#38bdf8; font-weight:bold;">✔️ บัญชีที่ได้รับการยืนยัน</span>' : '<span style="color:#888;">สมาชิกทั่วไป</span>';
+      if (isCPO(currentUser.username)) roleText = '<span style="color:#ef4444; font-weight:bold;">⚡ CPO (POWER 1000%)</span>';
+      document.getElementById('display-role').innerHTML = roleText;
+    }
+
+    function loadMyProfileStats() {
+      db.ref(`followers/${currentUser.username}`).on('value', snap => { document.getElementById('my-followers-count').innerText = snap.numChildren(); });
+      db.ref(`following/${currentUser.username}`).on('value', snap => { document.getElementById('my-following-count').innerText = snap.numChildren(); });
+    }
+
+    function handleFilePreview(input) {
+      const imgPreview = document.getElementById('post-preview-img');
+      const videoPreview = document.getElementById('post-preview-video');
+      imgPreview.style.display = 'none'; videoPreview.style.display = 'none';
+
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const url = URL.createObjectURL(file);
+        if (file.type.startsWith('image/')) { imgPreview.src = url; imgPreview.style.display = 'block'; }
+        else if (file.type.startsWith('video/')) { videoPreview.src = url; videoPreview.style.display = 'block'; }
+      }
+    }
+
+    function uploadFastMedia(file, onProgress) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onprogress = (e) => { if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100)); };
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function saveProfile() {
+      const avatarInput = document.getElementById('edit-avatar-file');
+      const coverInput = document.getElementById('edit-cover-file');
+      const bio = document.getElementById('edit-bio').value.trim();
+
+      try {
+        if (avatarInput.files[0]) currentUser.avatar = await uploadFastMedia(avatarInput.files[0]);
+        if (coverInput.files[0]) currentUser.cover = await uploadFastMedia(coverInput.files[0]);
+        if (bio) currentUser.bio = bio;
+
+        await db.ref('users/' + currentUser.username).update({
+          avatar: currentUser.avatar, cover: currentUser.cover, bio: currentUser.bio
+        });
+        alert("บันทึกโปรไฟล์เรียบร้อยแล้ว!"); updateProfileUI();
+      } catch (err) { alert("เกิดข้อผิดพลาดในการอัปโหลดภาพ"); }
+    }
+
+    function changePassword() {
+      const oldPass = document.getElementById('change-pass-old').value.trim();
+      const newPass = document.getElementById('change-pass-new').value.trim();
+      if (oldPass !== currentUser.password) return alert("รหัสผ่านเดิมไม่ถูกต้อง");
+      if (!newPass) return alert("กรุณาระบุรหัสผ่านใหม่");
+
+      db.ref(`users/${currentUser.username}`).update({ password: newPass }, () => {
+        alert("เปลี่ยนรหัสผ่านสำเร็จ!");
+        document.getElementById('change-pass-old').value = ''; document.getElementById('change-pass-new').value = '';
+      });
+    }
+
+    async function createPost() {
+      const content = document.getElementById('post-content').value.trim();
+      const fileInput = document.getElementById('post-file');
+      if (!content && !fileInput.files[0]) return alert("กรุณากรอกข้อความหรือเลือกสื่อก่อนโพสต์");
+
+      let mediaUrl = ""; let mediaType = "";
+      const progressContainer = document.getElementById('upload-progress-container');
+      const progressBar = document.getElementById('upload-progress-bar');
+      const statusText = document.getElementById('upload-status');
+
+      if (fileInput.files[0]) {
+        const file = fileInput.files[0];
+        progressContainer.style.display = 'block'; document.getElementById('post-btn').disabled = true;
+        try {
+          mediaUrl = await uploadFastMedia(file, (percent) => {
+            progressBar.style.width = percent + '%'; statusText.innerText = `กำลังประมวลผลสื่อ... ${percent}%`;
+          });
+          mediaType = file.type.startsWith('video/') ? 'video' : 'image';
+        } catch (err) {
+          alert("เกิดข้อผิดพลาดในการประมวลผลสื่อ"); progressContainer.style.display = 'none';
+          document.getElementById('post-btn').disabled = false; return;
+        }
+      }
+
+      const postRef = db.ref('posts').push();
+      postRef.set({
+        id: postRef.key, author: currentUser.username, avatar: currentUser.avatar || '',
+        verified: currentUser.verified || false, content: content, media: mediaUrl,
+        mediaType: mediaType, timestamp: firebase.database.ServerValue.TIMESTAMP
+      }, () => {
+        document.getElementById('post-content').value = ''; fileInput.value = '';
+        document.getElementById('post-preview-img').style.display = 'none';
+        document.getElementById('post-preview-video').style.display = 'none';
+        progressContainer.style.display = 'none'; progressBar.style.width = '0%';
+        statusText.innerText = ''; document.getElementById('post-btn').disabled = false;
+      });
+    }
+
+    function loadFeed() {
+      db.ref('posts').on('value', snap => { globalPosts = snap.val() || {}; renderFeed(); });
+    }
+
+    function renderFeed() {
+      const feedList = document.getElementById('feed-list');
+      feedList.innerHTML = '';
+      const keys = Object.keys(globalPosts).reverse();
+
+      keys.forEach(key => {
+        const post = globalPosts[key];
+        let mediaHTML = '';
+        if (post.media) {
+          mediaHTML = (post.mediaType === 'video')
+            ? `<video src="${post.media}" class="post-media" controls preload="metadata"></video>`
+            : `<img src="${post.media}" class="post-media">`;
+        }
+
+        const canDelete = (post.author === currentUser.username) || isCPO(currentUser.username);
+        const deleteBtnHTML = canDelete ? `<button class="btn-delete-post" onclick="deletePost('${key}')">🗑️ ลบโพสต์</button>` : '';
+
+        const postLikes = post.likes || {};
+        const postLikesCount = Object.keys(postLikes).length;
+        const isPostLikedByMe = postLikes[currentUser.username] === true;
+
+        const commentsObj = post.comments || {};
+        const commentKeys = Object.keys(commentsObj);
+
+        let commentsListHTML = '';
+        commentKeys.forEach(cKey => {
+          const comment = commentsObj[cKey];
+          const commentLikesCount = Object.keys(comment.likes || {}).length;
+          const isCommentLikedByMe = (comment.likes || {})[currentUser.username] === true;
+
+          commentsListHTML += `
+            <div class="comment-item">
+              <div class="comment-top">
+                <span class="comment-user" onclick="openUserProfile('${comment.author}')">👤 ${comment.author}</span>
+                <button class="btn-sub-action" onclick="toggleCommentLike('${key}', '${cKey}')" style="background:none; border:none; cursor:pointer; color: ${isCommentLikedByMe ? '#f87171' : 'var(--text-sub)'}">
+                  ❤️ ${commentLikesCount}
+                </button>
+              </div>
+              <div class="comment-text">${comment.text}</div>
+            </div>
+          `;
+        });
+
+        feedList.innerHTML += `
+          <div class="post-box">
+            <div class="post-header">
+              <div class="post-header-left" onclick="openUserProfile('${post.author}')">
+                <img src="${post.avatar || 'https://via.placeholder.com/44'}" class="post-avatar">
+                <div>
+                  <strong style="color:#fff;">${post.author}</strong> ${post.verified ? '<span class="verified-badge">✔</span>' : ''}
+                  <div class="post-time">${timeAgo(post.timestamp)}</div>
+                </div>
+              </div>
+              ${deleteBtnHTML}
+            </div>
+            
+            ${post.content ? `<p style="font-size:14px; color:#e5e7eb;">${post.content}</p>` : ''}
+            ${mediaHTML}
+
+            <div class="post-actions-bar">
+              <button class="action-btn ${isPostLikedByMe ? 'liked' : ''}" onclick="togglePostLike('${key}')">
+                ❤️ ${postLikesCount}
+              </button>
+              <button class="action-btn" onclick="toggleCommentsSection('${key}')">
+                💬 ${commentKeys.length}
+              </button>
+              <button class="action-btn" onclick="sharePost('${key}')">🔗 แชร์</button>
+            </div>
+
+            <div class="comments-area" id="comments-area-${key}">
+              <div class="comment-list">${commentsListHTML}</div>
+              <div class="comment-box-input">
+                <input type="text" id="comment-input-${key}" placeholder="เขียนความคิดเห็น...">
+                <button class="btn" onclick="addComment('${key}')">ส่ง</button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // ==========================================
+    // 👤 ระบบดูโปรไฟล์ผู้ใช้อื่น & ติดตาม
+    // ==========================================
+    function openUserProfile(targetUsername) {
+      if (targetUsername === currentUser.username) { switchTab('profile'); return; }
+      inspectingTargetUser = targetUsername;
+      const modal = document.getElementById('user-profile-modal');
+
+      db.ref(`users/${targetUsername}`).once('value', snap => {
+        if (!snap.exists()) return alert("ไม่พบผู้ใช้รายนี้");
+        const u = snap.val();
+
+        document.getElementById('view-user-name').innerText = u.username;
+        document.getElementById('view-user-bio').innerText = u.bio || "ยังไม่ได้ตั้งค่า Bio";
+        document.getElementById('view-user-avatar').src = u.avatar || "https://via.placeholder.com/90";
+        document.getElementById('view-user-cover').style.backgroundImage = `url('${u.cover || "https://via.placeholder.com/600x200/1e1e2d/ffffff?text=THE+BEST"}')`;
+
+        let roleText = u.verified ? '<span style="color:#38bdf8; font-weight:bold;">✔️ บัญชีที่ได้รับการยืนยัน</span>' : '<span style="color:#888;">สมาชิกทั่วไป</span>';
+        if (isCPO(u.username)) roleText = '<span style="color:#ef4444; font-weight:bold;">⚡ CPO (POWER 1000%)</span>';
+        document.getElementById('view-user-role').innerHTML = roleText;
+
+        db.ref(`followers/${targetUsername}`).on('value', fSnap => { document.getElementById('view-user-followers').innerText = fSnap.numChildren(); });
+        db.ref(`following/${targetUsername}`).on('value', fSnap => { document.getElementById('view-user-following').innerText = fSnap.numChildren(); });
+
+        db.ref(`following/${currentUser.username}/${targetUsername}`).once('value', isFollowSnap => {
+          const btn = document.getElementById('btn-toggle-follow');
+          if (isFollowSnap.exists()) {
+            btn.innerText = "✔️ กำลังติดตาม"; btn.className = "btn btn-following";
+          } else {
+            btn.innerText = "➕ ติดตาม"; btn.className = "btn";
+          }
+        });
+
+        modal.style.display = 'flex';
+      });
+    }
+
+    function closeUserProfileModal() {
+      document.getElementById('user-profile-modal').style.display = 'none';
+      inspectingTargetUser = null;
+    }
+
+    function handleFollowToggle() {
+      if (!inspectingTargetUser) return;
+      const myFollowingRef = db.ref(`following/${currentUser.username}/${inspectingTargetUser}`);
+      const targetFollowerRef = db.ref(`followers/${inspectingTargetUser}/${currentUser.username}`);
+
+      myFollowingRef.once('value', snap => {
+        if (snap.exists()) {
+          myFollowingRef.remove(); targetFollowerRef.remove();
+          document.getElementById('btn-toggle-follow').innerText = "➕ ติดตาม";
+          document.getElementById('btn-toggle-follow').className = "btn";
+        } else {
+          myFollowingRef.set(true); targetFollowerRef.set(true);
+          document.getElementById('btn-toggle-follow').innerText = "✔️ กำลังติดตาม";
+          document.getElementById('btn-toggle-follow').className = "btn btn-following";
+        }
+      });
+    }
+
+    // ==========================================
+    // 💬 ระบบแชทศูนย์รวม (CHAT CENTER & REAL-TIME CHAT)
+    // ==========================================
+    async function handleOpenChatClick() {
+      if (!inspectingTargetUser) return;
+      const target = inspectingTargetUser;
+
+      const iFollowTarget = (await db.ref(`following/${currentUser.username}/${target}`).once('value')).exists();
+      const targetFollowsMe = (await db.ref(`following/${target}/${currentUser.username}`).once('value')).exists();
+
+      if (iFollowTarget && targetFollowsMe) {
+        closeUserProfileModal();
+        switchTab('chat');
+        enterChatRoom(target);
+      } else if (!iFollowTarget) {
+        alert(`❌ คุณต้องกดติดตาม "${target}" ก่อนถึงจะทักแชทได้!`);
+      } else if (!targetFollowsMe) {
+        alert(`🔒 ไม่สามารถทักแชทได้: "${target}" ยังไม่ได้ติดตามคุณกลับ (ต้องติดตามกันและกัน)`);
+      }
+    }
+
+    function getChatRoomId(userA, userB) {
+      return [userA, userB].sort().join("_");
+    }
+
+    // ดึงรายชื่อคนที่สามารถแชทด้วยได้ทั้งหมด (Mutual Follow)
+    function loadChatList() {
+      const listContainer = document.getElementById('chat-recent-list');
+      listContainer.innerHTML = '<p style="text-align:center; color:var(--text-sub); font-size:13px; padding:20px;">กำลังโหลดรายชื่อแชท...</p>';
+
+      db.ref(`following/${currentUser.username}`).once('value', snap => {
+        const followingObj = snap.val() || {};
+        const followingUsers = Object.keys(followingObj);
+
+        if (followingUsers.length === 0) {
+          listContainer.innerHTML = '<p style="text-align:center; color:var(--text-sub); font-size:13px; padding:20px;">ยังไม่มีรายชื่อแชท (คุณต้องกดติดตามเพื่อน และเพื่อนติดตามคุณกลับก่อน)</p>';
+          return;
+        }
+
+        listContainer.innerHTML = '';
+        followingUsers.forEach(targetUser => {
+          // เช็กว่าอีกฝ่ายติดตามเรากลับไหม
+          db.ref(`following/${targetUser}/${currentUser.username}`).once('value', mutualSnap => {
+            if (mutualSnap.exists()) {
+              db.ref(`users/${targetUser}`).once('value', uSnap => {
+                const u = uSnap.val();
+                if (!u) return;
+
+                const roomId = getChatRoomId(currentUser.username, targetUser);
+                db.ref(`chats/${roomId}`).limitToLast(1).once('value', msgSnap => {
+                  let lastMsgText = "คลิกเพื่อเริ่มสนทนาแชท";
+                  let lastMsgTime = "";
+                  if (msgSnap.exists()) {
+                    const msgKey = Object.keys(msgSnap.val())[0];
+                    const msg = msgSnap.val()[msgKey];
+                    lastMsgText = (msg.sender === currentUser.username ? "คุณ: " : "") + msg.text;
+                    lastMsgTime = formatTime(msg.timestamp);
+                  }
+
+                  listContainer.innerHTML += `
+                    <div class="chat-user-item" onclick="enterChatRoom('${u.username}')">
+                      <img src="${u.avatar || 'https://via.placeholder.com/48'}" class="chat-user-avatar">
+                      <div style="flex:1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <strong style="color:#fff; font-size:14px;">${u.username} ${u.verified ? '✔' : ''}</strong>
+                          <span style="font-size:10px; color:var(--text-sub);">${lastMsgTime}</span>
+                        </div>
+                        <div style="font-size:12px; color:var(--text-sub); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:260px;">${lastMsgText}</div>
+                      </div>
+                    </div>
+                  `;
+                });
+              });
+            }
+          });
+        });
+      });
+    }
+
+    // เปิดห้องแชทคุยจริง
+    function enterChatRoom(targetUsername) {
+      activeChatTarget = targetUsername;
+      activeChatRoomId = getChatRoomId(currentUser.username, targetUsername);
+
+      db.ref(`users/${targetUsername}`).once('value', snap => {
+        const u = snap.val();
+        document.getElementById('active-chat-username').innerText = u.username + (u.verified ? ' ✔' : '');
+        document.getElementById('active-chat-avatar').src = u.avatar || "https://via.placeholder.com/48";
+
+        document.getElementById('chat-list-view').style.display = 'none';
+        document.getElementById('chat-room-view').style.display = 'block';
+
+        listenChatMessages();
+      });
+    }
+
+    function backToChatList() {
+      document.getElementById('chat-room-view').style.display = 'none';
+      document.getElementById('chat-list-view').style.display = 'block';
+      if (chatListenerRef) chatListenerRef.off();
+      activeChatRoomId = null;
+      activeChatTarget = null;
+      loadChatList();
+    }
+
+    function listenChatMessages() {
+      const chatContainer = document.getElementById('chat-messages-container');
+      chatContainer.innerHTML = '';
+
+      chatListenerRef = db.ref(`chats/${activeChatRoomId}`);
+      chatListenerRef.on('value', snap => {
+        chatContainer.innerHTML = '';
+        const messages = snap.val() || {};
+
+        Object.keys(messages).forEach(mKey => {
+          const msg = messages[mKey];
+          const isMe = msg.sender === currentUser.username;
+          
+          chatContainer.innerHTML += `
+            <div class="chat-msg-wrapper ${isMe ? 'me' : 'other'}">
+              <div class="chat-msg-bubble">${msg.text}</div>
+              <div class="chat-time-stamp">${formatTime(msg.timestamp)}</div>
+            </div>
+          `;
+        });
+
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      });
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('chat-msg-input');
+      const text = input.value.trim();
+      if (!text || !activeChatRoomId) return;
+
+      const msgRef = db.ref(`chats/${activeChatRoomId}`).push();
+      msgRef.set({
+        sender: currentUser.username,
+        text: text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      }, () => {
+        input.value = '';
+      });
+    }
+
+    // ==========================================
+    // OTHER FUNCTIONS
+    // ==========================================
+    function togglePostLike(postId) {
+      const likeRef = db.ref(`posts/${postId}/likes/${currentUser.username}`);
+      likeRef.once('value', snap => {
+        if (snap.exists()) { likeRef.remove(); }
+        else { likeRef.set(true); }
+      });
+    }
+
+    function toggleCommentsSection(postId) {
+      const area = document.getElementById(`comments-area-${postId}`);
+      area.style.display = (area.style.display === 'flex') ? 'none' : 'flex';
+    }
+
+    function addComment(postId) {
+      const input = document.getElementById(`comment-input-${postId}`);
+      const text = input.value.trim();
+      if (!text) return alert("กรุณาพิมพ์ความคิดเห็นก่อนส่ง");
+
+      const commentRef = db.ref(`posts/${postId}/comments`).push();
+      commentRef.set({
+        id: commentRef.key, author: currentUser.username, text: text,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      }, () => {
+        input.value = '';
+      });
+    }
+
+    function toggleCommentLike(postId, commentId) {
+      const likeRef = db.ref(`posts/${postId}/comments/${commentId}/likes/${currentUser.username}`);
+      likeRef.once('value', snap => {
+        if (snap.exists()) { likeRef.remove(); }
+        else { likeRef.set(true); }
+      });
+    }
+
+    function sharePost(postId) {
+      const post = globalPosts[postId];
+      const shareText = `โพสต์โดย ${post.author}: "${post.content || ''}"`;
+      navigator.clipboard.writeText(shareText).then(() => { alert("📋 คัดลอกเนื้อหาโพสต์ไปยังคลิปบอร์ดแล้ว!"); });
+    }
+
+    function deletePost(postId) {
+      if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบโพสต์นี้?")) {
+        db.ref(`posts/${postId}`).remove().then(() => { alert("ลบโพสต์เรียบร้อยแล้ว"); });
+      }
+    }
+
+    /* CPO CONTROL */
+    function renderAdminUsers() {
+      if (!isCPO(currentUser.username)) return;
+      const search = document.getElementById('admin-search-user').value.toLowerCase();
+      const listContainer = document.getElementById('admin-user-list');
+
+      db.ref('users').once('value', snap => {
+        const users = snap.val() || {};
+        listContainer.innerHTML = '';
+
+        Object.keys(users).forEach(uKey => {
+          if (search && !uKey.toLowerCase().includes(search)) return;
+          const u = users[uKey];
+          const isVerified = u.verified || false;
+          const isUserBanned = u.banned || false;
+
+          listContainer.innerHTML += `
+            <div class="user-item-row">
+              <div>
+                <strong>${u.username}</strong> ${isVerified ? '✔️' : ''} ${isUserBanned ? '<span style="color:#ef4444;">[BANNED]</span>' : ''}
+                <div style="font-size:11px; color:#888;">สถานะ: ${isUserBanned ? 'ถูกแบน' : (isVerified ? 'ยืนยันตัวตน' : 'ทั่วไป')}</div>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button class="btn ${isVerified ? 'btn-danger' : 'btn-admin'}" style="padding: 6px 10px; font-size:12px; width:auto;" onclick="toggleUserVerify('${u.username}', ${!isVerified})">
+                  ${isVerified ? 'ปลดติ๊กฟ้า ❌' : 'มอบติ๊กฟ้า ✔'}
+                </button>
+                <button class="btn btn-danger" style="padding: 6px 10px; font-size:12px; width:auto;" onclick="toggleUserBan('${u.username}', ${!isUserBanned})">
+                  ${isUserBanned ? 'ปลดแบน 🟢' : 'แบน 🔨'}
+                </button>
+              </div>
+            </div>
+          `;
+        });
+      });
+    }
+
+    function toggleUserVerify(targetUsername, setVerified) {
+      if (!isCPO(currentUser.username)) return;
+      db.ref(`users/${targetUsername}`).update({ verified: setVerified }, () => {
+        alert(`อัปเดตสิทธิ์ติ๊กฟ้าให้ ${targetUsername} เรียบร้อยแล้ว!`); renderAdminUsers();
+      });
+    }
+
+    function toggleUserBan(targetUsername, setBanned) {
+      if (!isCPO(currentUser.username)) return;
+      if (isCPO(targetUsername)) return alert("ไม่สามารถแบน CPO ด้วยกันได้");
+      db.ref(`users/${targetUsername}`).update({ banned: setBanned }, () => {
+        alert(`อัปเดตการแบนบัญชี ${targetUsername} เรียบร้อยแล้ว!`); renderAdminUsers();
+      });
+    }
+
+    function logout() { location.reload(); }
+  </script>
+</body>
+</html>
